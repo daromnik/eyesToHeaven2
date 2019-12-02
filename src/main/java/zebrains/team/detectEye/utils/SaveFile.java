@@ -1,4 +1,4 @@
-package zebrains.team.detectEye.Utils;
+package zebrains.team.detectEye.utils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,15 +21,19 @@ public class SaveFile {
      *
      * @param file MultipartFile
      * @throws IOException
+     * @return String
      */
-    public void saveUploadedFiles(MultipartFile file) throws IOException {
+    public String saveUploadedFiles(MultipartFile file) throws IOException {
         System.out.println("Upload folder: " + UPLOAD_FOLDER);
 
         if (!file.isEmpty() && checkOrCreateDirectory(UPLOAD_FOLDER)) {
             byte[] bytes = file.getBytes();
             Path path = Paths.get(UPLOAD_FOLDER + file.getOriginalFilename());
             Files.write(path, bytes);
+            return path.toString();
         }
+
+        return "";
     }
 
     /**
@@ -52,5 +56,4 @@ public class SaveFile {
         }
         return true;
     }
-
 }

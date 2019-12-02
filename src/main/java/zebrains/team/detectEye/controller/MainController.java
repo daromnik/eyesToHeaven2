@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import zebrains.team.detectEye.Utils.SaveFile;
+import zebrains.team.detectEye.utils.DetectEye;
+import zebrains.team.detectEye.utils.SaveFile;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,11 +17,12 @@ import java.nio.file.FileSystems;
 @RestController
 public class MainController {
 
-    final
-    SaveFile saveFileModel;
+    private SaveFile saveFileModel;
+    private DetectEye detectEyeModel;
 
-    public MainController(SaveFile saveFileModel) {
+    public MainController(SaveFile saveFileModel, DetectEye detectEyeModel) {
         this.saveFileModel = saveFileModel;
+        this.detectEyeModel = detectEyeModel;
     }
 
     @PostMapping("/upload-file")
@@ -32,8 +34,15 @@ public class MainController {
             return new ResponseEntity<>("please select a file!", HttpStatus.OK);
         }
 
+        if (!uploadFile.getContentType().contains("image")) {
+            return new ResponseEntity<>("please select a image file (jpeg, jpg, png)!", HttpStatus.OK);
+        }
+
         try {
-            saveFileModel.saveUploadedFiles(uploadFile);
+            String pathImage = saveFileModel.saveUploadedFiles(uploadFile);
+
+            detectEyeModel.init(pathImage);
+
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
