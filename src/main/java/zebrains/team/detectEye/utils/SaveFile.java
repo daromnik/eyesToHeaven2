@@ -1,14 +1,15 @@
 package zebrains.team.detectEye.utils;
 
+import com.google.common.io.Files;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
 public class SaveFile {
@@ -28,8 +29,9 @@ public class SaveFile {
 
         if (!file.isEmpty() && checkOrCreateDirectory(UPLOAD_FOLDER)) {
             byte[] bytes = file.getBytes();
-            Path path = Paths.get(UPLOAD_FOLDER + file.getOriginalFilename());
-            Files.write(path, bytes);
+            UUID uuid = UUID.randomUUID();
+            Path path = Paths.get(UPLOAD_FOLDER + uuid.toString() + "." + Files.getFileExtension(file.getOriginalFilename()));
+            java.nio.file.Files.write(path, bytes);
             return path.toString();
         }
 
@@ -43,7 +45,7 @@ public class SaveFile {
      * @param folder String
      * @return boolean
      */
-    public boolean checkOrCreateDirectory(String folder) {
+    public static boolean checkOrCreateDirectory(String folder) {
         final File directory = new File(folder);
         if (!directory.exists()) {
             if (directory.mkdirs()) {
