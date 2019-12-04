@@ -1,6 +1,7 @@
 package zebrains.team.detectEye.utils;
 
 import com.google.common.io.Files;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
+@Log4j
 public class SaveFile {
 
     @Value("${spring.application.uploadFolder}")
@@ -25,7 +27,7 @@ public class SaveFile {
      * @return String
      */
     public String saveUploadedFiles(MultipartFile file) throws IOException {
-        System.out.println("Upload folder: " + UPLOAD_FOLDER);
+        log.info("Upload folder: " + UPLOAD_FOLDER);
 
         if (!file.isEmpty() && checkOrCreateDirectory(UPLOAD_FOLDER)) {
             byte[] bytes = file.getBytes();
@@ -49,10 +51,10 @@ public class SaveFile {
         final File directory = new File(folder);
         if (!directory.exists()) {
             if (directory.mkdirs()) {
-                System.out.println("Create directory " + directory.getAbsolutePath() + " - SUCCESS");
+                log.info("Create directory " + directory.getAbsolutePath() + " - SUCCESS");
                 return true;
             } else {
-                System.out.println("Create directory " + directory.getAbsolutePath() + " - ERROR");
+                log.error("Create directory " + directory.getAbsolutePath() + " - ERROR");
                 return false;
             }
         }

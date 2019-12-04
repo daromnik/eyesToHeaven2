@@ -1,6 +1,7 @@
 package zebrains.team.detectEye.utils;
 
 import com.google.common.io.Files;
+import lombok.extern.log4j.Log4j;
 import nu.pattern.OpenCV;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 
 @Service
+@Log4j
 public class DetectEye {
 
     private BufferedImage originImage;
@@ -44,21 +46,20 @@ public class DetectEye {
         imageFormat = Files.getFileExtension(pathImage);
         imageName = Files.getNameWithoutExtension(pathImage);
         if (file.exists()) {
-            System.out.println("Есть картинка");
+            log.info("Есть картинка " + pathImage);
             try {
                 originImage = ImageIO.read(file);
 
                 byte[] pixels = ((DataBufferByte) originImage.getRaster().getDataBuffer()).getData();
                 originMat = new Mat(originImage.getHeight(), originImage.getWidth(), CvType.CV_8UC3);
                 originMat.put(0, 0, pixels);
-
                 return detectAndSave(originMat);
-
             } catch (IOException e) {
+                log.error("Error!", e);
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Нет картинки");
+            log.error("Нет картинки " + pathImage);
         }
         return false;
     }
