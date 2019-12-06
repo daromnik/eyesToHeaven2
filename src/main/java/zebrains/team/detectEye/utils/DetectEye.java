@@ -40,7 +40,7 @@ public class DetectEye {
     /**
      * @return boolean
      */
-    public boolean detectEye(String pathImage) {
+    public String detectEye(String pathImage) {
         SaveFile.checkOrCreateDirectory(UPLOAD_FOLDER);
         File file = new File(pathImage);
         imageFormat = Files.getFileExtension(pathImage);
@@ -61,7 +61,7 @@ public class DetectEye {
         } else {
             log.error("Нет картинки " + pathImage);
         }
-        return false;
+        return "";
     }
 
     /**
@@ -83,7 +83,7 @@ public class DetectEye {
      * @throws IOException
      * @return boolean
      */
-    private boolean detectAndSave(Mat originMat) throws IOException {
+    private String detectAndSave(Mat originMat) throws IOException {
         MatOfRect faces = new MatOfRect();
         Mat grayFrame = new Mat();
 
@@ -101,11 +101,12 @@ public class DetectEye {
             //берем первый элмент массива
             Rect item = facesArray[0];
             BufferedImage dest = originImage.getSubimage(item.x, item.y, item.width, item.height);
-            File fileForEye = new File(UPLOAD_FOLDER + imageName + "_eye." + imageFormat);
+            String eyeImageName = imageName + "_eye." + imageFormat;
+            File fileForEye = new File(UPLOAD_FOLDER + eyeImageName);
             ImageIO.write(dest, imageFormat, fileForEye);
-            return true;
+            return eyeImageName;
         } else {
-            return false;
+            return "";
         }
     }
 

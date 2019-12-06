@@ -1,0 +1,71 @@
+package zebrains.team.detectEye.config;
+
+import lombok.extern.log4j.Log4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+import zebrains.team.detectEye.model.KafkaConsumerMessage;
+import zebrains.team.detectEye.model.KafkaProducerMessage;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+@EnableKafka
+@Configuration
+@Log4j
+public class KafkaConfig {
+
+    @Value("${kafka.server.url}")
+    private String kafkaServerUrl;
+
+    @Value("${kafka.server.group}")
+    private String kafkaGroup;
+
+    @Bean
+    public ProducerFactory<String, KafkaProducerMessage> producerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServerUrl);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, KafkaProducerMessage> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public ConsumerFactory<String, KafkaConsumerMessage> consumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServerUrl);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaGroup);
+        //config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        //config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(KafkaConsumerMessage.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentHashMap<String, KafkaConsumerMessage> kafkaDataProducerConsumer() {
+        return new ConcurrentHashMap<>();
+    }
+
+}

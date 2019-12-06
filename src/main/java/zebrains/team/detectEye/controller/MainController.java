@@ -1,21 +1,20 @@
 package zebrains.team.detectEye.controller;
 
 import lombok.extern.log4j.Log4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import zebrains.team.detectEye.utils.DetectEye;
 import zebrains.team.detectEye.model.ResponseObject;
+import zebrains.team.detectEye.producer.KafkaProd;
+import zebrains.team.detectEye.utils.DetectEye;
 import zebrains.team.detectEye.utils.SaveFile;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystems;
 
 @RestController
 @RequestMapping(value = "/api", produces = "application/json")
@@ -25,15 +24,18 @@ public class MainController {
     private SaveFile saveFileModel;
     private DetectEye detectEyeModel;
     private ResponseObject responseObject;
+    private KafkaProd kafkaProd;
 
     public MainController(
             SaveFile saveFileModel,
             DetectEye detectEyeModel,
-            ResponseObject responseObject
+            ResponseObject responseObject,
+            KafkaProd kafkaProd
     ) {
         this.saveFileModel = saveFileModel;
         this.detectEyeModel = detectEyeModel;
         this.responseObject = responseObject;
+        this.kafkaProd = kafkaProd;
     }
 
     @PostMapping("/upload")
@@ -50,10 +52,14 @@ public class MainController {
 
         try {
             String pathImage = saveFileModel.saveUploadedFiles(uploadFile);
-            boolean isFindEye = detectEyeModel.detectEye(pathImage);
-            if (!isFindEye) {
+            String eyeImage = detectEyeModel.detectEye(pathImage);
+            if (eyeImage.isEmpty()) {
                 return initErrorResponse("No eyes found in the picture");
             }
+
+            kafkaProd.setImageEyePath(eyeImage);
+            kafkaProd.send();
+
         } catch (IOException e) {
             log.error("Error!", e);
             return initErrorResponse(e.getMessage());
@@ -64,24 +70,20 @@ public class MainController {
 
     private ResponseEntity initSuccessResponse(String message) {
         responseObject.setDescription(message);
-        responseObject.setStatus(responseObject.STATUS_SUCCESS);
-        return new ResponseEntity<>(responseObject, new HttpHeaders(), HttpStatus.OK);
+        responseObject.setStatus(ResponseObject.STATUS_SUCCESS);
+        return ResponseEntity.ok(responseObject);
     }
 
     private ResponseEntity initErrorResponse(String error) {
         responseObject.setDescription(error);
-        responseObject.setStatus(responseObject.STATUS_ERROR);
-        return new ResponseEntity<>(responseObject, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+        responseObject.setStatus(ResponseObject.STATUS_ERROR);
+        return ResponseEntity.badRequest().body(responseObject);
     }
 
     @PostMapping("/test")
     public ResponseEntity<?> test(@RequestParam("name") String name) throws URISyntaxException {
-        String userDirectory = FileSystems.getDefault()
-                .getPath("")
-                .toAbsolutePath()
-                .toString();
 
-        return initSuccessResponse(userDirectory);
+        return initSuccessResponse("TEST");
     }
 
 }
