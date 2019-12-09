@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.ResponseObject;
 import zebrains.team.detectEye.producer.KafkaProd;
 import zebrains.team.detectEye.utils.DetectEye;
@@ -58,32 +59,33 @@ public class MainController {
             }
 
             kafkaProd.setImageEyePath(eyeImage);
-            kafkaProd.send();
+            KafkaConsumerMessage kafkaConsumerMessage = kafkaProd.send();
+            return initSuccessResponse(kafkaConsumerMessage);
 
         } catch (IOException e) {
             log.error("Error!", e);
             return initErrorResponse(e.getMessage());
         }
-
-        return initSuccessResponse("Successfully uploaded - " + uploadFile.getOriginalFilename());
     }
 
-    private ResponseEntity initSuccessResponse(String message) {
-        responseObject.setDescription(message);
+    private ResponseEntity initSuccessResponse(KafkaConsumerMessage data) {
         responseObject.setStatus(ResponseObject.STATUS_SUCCESS);
+        responseObject.setData(data);
         return ResponseEntity.ok(responseObject);
     }
 
     private ResponseEntity initErrorResponse(String error) {
         responseObject.setDescription(error);
         responseObject.setStatus(ResponseObject.STATUS_ERROR);
+        responseObject.setData(null);
+        log.info("Error: " + error);
         return ResponseEntity.badRequest().body(responseObject);
     }
 
     @PostMapping("/test")
     public ResponseEntity<?> test(@RequestParam("name") String name) throws URISyntaxException {
 
-        return initSuccessResponse("TEST");
+        return ResponseEntity.ok("TEST");
     }
 
 }

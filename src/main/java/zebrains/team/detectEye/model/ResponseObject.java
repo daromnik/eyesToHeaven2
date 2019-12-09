@@ -14,5 +14,6 @@ public class ResponseObject {
 
     private String status;
     private String description;
+    private KafkaConsumerMessage data;
 
 }

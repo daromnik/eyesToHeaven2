@@ -11,8 +11,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer2;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import zebrains.team.detectEye.error.KafkaErrorHandler;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.KafkaProducerMessage;
 
@@ -50,9 +52,20 @@ public class KafkaConfig {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServerUrl);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaGroup);
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         //config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         //config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(KafkaConsumerMessage.class));
+
+
+        ErrorHandlingDeserializer2<String> keyErrorHandlingDeserializer
+                = new ErrorHandlingDeserializer2<>(new StringDeserializer());
+        ErrorHandlingDeserializer2<KafkaConsumerMessage> valueErrorHandlingDeserializer
+                = new ErrorHandlingDeserializer2<>(new JsonDeserializer<>(KafkaConsumerMessage.class));
+
+        return new DefaultKafkaConsumerFactory<>(config, keyErrorHandlingDeserializer, valueErrorHandlingDeserializer);
+
+
+        //return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(KafkaConsumerMessage.class));
     }
 
     @Bean
@@ -60,6 +73,7 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
+        factory.setErrorHandler(new KafkaErrorHandler());
         return factory;
     }
 
