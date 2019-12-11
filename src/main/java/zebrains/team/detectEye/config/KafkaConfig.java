@@ -11,9 +11,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer2;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.ui.Model;
 import zebrains.team.detectEye.error.KafkaErrorHandler;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.KafkaProducerMessage;
@@ -47,12 +51,27 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
+
+//    @Bean
+//    public ReplyingKafkaTemplate<String, KafkaProducerMessage, KafkaConsumerMessage> replyKafkaTemplate(ProducerFactory<String, KafkaProducerMessage> pf, KafkaMessageListenerContainer<String, KafkaConsumerMessage> container) {
+//        return new ReplyingKafkaTemplate<String, KafkaProducerMessage, KafkaConsumerMessage>(pf, container);
+//    }
+//
+//    @Bean
+//
+//    public KafkaMessageListenerContainer<String, Model> replyContainer(ConsumerFactory<String, KafkaConsumerMessage> cf) {
+//        ContainerProperties containerProperties = new ContainerProperties(requestReplyTopic);
+//        return new KafkaMessageListenerContainer<>(cf, containerProperties);
+//
+//    }
+
     @Bean
     public ConsumerFactory<String, KafkaConsumerMessage> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServerUrl);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaGroup);
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        config.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "60000");
         //config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         //config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
@@ -72,7 +91,7 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
+        //factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
         factory.setErrorHandler(new KafkaErrorHandler());
         return factory;
     }

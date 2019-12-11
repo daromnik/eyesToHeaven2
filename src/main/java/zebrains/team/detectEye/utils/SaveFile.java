@@ -32,7 +32,9 @@ public class SaveFile {
         if (!file.isEmpty() && checkOrCreateDirectory(UPLOAD_FOLDER)) {
             byte[] bytes = file.getBytes();
             UUID uuid = UUID.randomUUID();
-            Path path = Paths.get(UPLOAD_FOLDER + uuid.toString() + "." + Files.getFileExtension(file.getOriginalFilename()));
+            String fileName = uuid.toString() + "." + Files.getFileExtension(file.getOriginalFilename());
+            Path path = Paths.get(UPLOAD_FOLDER + fileName);
+            log.info("Файл сохранен: " + fileName);
             java.nio.file.Files.write(path, bytes);
             return path.toString();
         }

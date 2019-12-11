@@ -18,5 +18,8 @@ public class KafkaConsumerMessage {
     private String algo;
     private String name;
     private String uuid;
+    private String key;
+
+    private String id;
 
 }

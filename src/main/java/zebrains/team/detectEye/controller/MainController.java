@@ -1,6 +1,9 @@
 package zebrains.team.detectEye.controller;
 
 import lombok.extern.log4j.Log4j;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,16 +30,19 @@ public class MainController {
     private ResponseObject responseObject;
     private KafkaProd kafkaProd;
 
+    @Autowired
+    private ApplicationContext context;
+
     public MainController(
             SaveFile saveFileModel,
             DetectEye detectEyeModel,
-            ResponseObject responseObject,
-            KafkaProd kafkaProd
+            ResponseObject responseObject
+            //KafkaProd kafkaProd
     ) {
         this.saveFileModel = saveFileModel;
         this.detectEyeModel = detectEyeModel;
         this.responseObject = responseObject;
-        this.kafkaProd = kafkaProd;
+        //this.kafkaProd = kafkaProd;
     }
 
     @PostMapping("/upload")
@@ -58,11 +64,13 @@ public class MainController {
                 return initErrorResponse("No eyes found in the picture");
             }
 
+            kafkaProd = context.getBean(KafkaProd.class);
             kafkaProd.setImageEyePath(eyeImage);
             KafkaConsumerMessage kafkaConsumerMessage = kafkaProd.send();
+
             return initSuccessResponse(kafkaConsumerMessage);
 
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             log.error("Error!", e);
             return initErrorResponse(e.getMessage());
         }
@@ -71,6 +79,8 @@ public class MainController {
     private ResponseEntity initSuccessResponse(KafkaConsumerMessage data) {
         responseObject.setStatus(ResponseObject.STATUS_SUCCESS);
         responseObject.setData(data);
+        responseObject.setDescription("");
+        log.info("Success: " + data);
         return ResponseEntity.ok(responseObject);
     }
 
@@ -78,7 +88,7 @@ public class MainController {
         responseObject.setDescription(error);
         responseObject.setStatus(ResponseObject.STATUS_ERROR);
         responseObject.setData(null);
-        log.info("Error: " + error);
+        log.error("Error: " + error);
         return ResponseEntity.badRequest().body(responseObject);
     }
 
