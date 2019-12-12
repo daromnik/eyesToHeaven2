@@ -33,7 +33,7 @@ public class SaveFile {
             byte[] bytes = file.getBytes();
             UUID uuid = UUID.randomUUID();
             String fileName = uuid.toString() + "." + Files.getFileExtension(file.getOriginalFilename());
-            Path path = Paths.get(UPLOAD_FOLDER + fileName);
+            Path path = Paths.get(UPLOAD_FOLDER, fileName);
             log.info("Файл сохранен: " + fileName);
             java.nio.file.Files.write(path, bytes);
             return path.toString();

@@ -16,6 +16,7 @@ import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 @Service
 @Log4j
@@ -102,7 +103,8 @@ public class DetectEye {
             Rect item = facesArray[0];
             BufferedImage dest = originImage.getSubimage(item.x, item.y, item.width, item.height);
             String eyeImageName = imageName + "_eye." + imageFormat;
-            File fileForEye = new File(UPLOAD_FOLDER + eyeImageName);
+            String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
+            File fileForEye = new File(eyeImage);
             ImageIO.write(dest, imageFormat, fileForEye);
             return eyeImageName;
         } else {

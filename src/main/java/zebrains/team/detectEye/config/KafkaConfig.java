@@ -51,20 +51,6 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
-
-//    @Bean
-//    public ReplyingKafkaTemplate<String, KafkaProducerMessage, KafkaConsumerMessage> replyKafkaTemplate(ProducerFactory<String, KafkaProducerMessage> pf, KafkaMessageListenerContainer<String, KafkaConsumerMessage> container) {
-//        return new ReplyingKafkaTemplate<String, KafkaProducerMessage, KafkaConsumerMessage>(pf, container);
-//    }
-//
-//    @Bean
-//
-//    public KafkaMessageListenerContainer<String, Model> replyContainer(ConsumerFactory<String, KafkaConsumerMessage> cf) {
-//        ContainerProperties containerProperties = new ContainerProperties(requestReplyTopic);
-//        return new KafkaMessageListenerContainer<>(cf, containerProperties);
-//
-//    }
-
     @Bean
     public ConsumerFactory<String, KafkaConsumerMessage> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -91,7 +77,7 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, KafkaConsumerMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        //factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
+        factory.setRecordFilterStrategy(record -> record.value().getResult().isEmpty());
         factory.setErrorHandler(new KafkaErrorHandler());
         return factory;
     }

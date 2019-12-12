@@ -9,6 +9,8 @@ import org.springframework.core.io.FileSystemResource;
 
 import java.io.File;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 @Log4j
@@ -34,7 +36,7 @@ public class ApplicationConfig {
 
         log.info("JAR Directory: " + jarDirectory);
 
-        String configFile = jarDirectory + File.separator + nameFileProperties;
+        String configFile = Paths.get(jarDirectory, nameFileProperties).toString();
 
         log.info("Config File: " + configFile);
 

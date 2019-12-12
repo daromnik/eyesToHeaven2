@@ -35,7 +35,9 @@ public class KafkaProd {
         this.imageEyePath = imageEyePath;
     }
 
-    public KafkaConsumerMessage send() throws InterruptedException {
+    public KafkaConsumerMessage send() {
+
+        log.info("THREAD send: " + Thread.currentThread().getName());
 
         if (imageEyePath.isEmpty()) {
             log.error("Error! Не передено название картинки!");
@@ -49,21 +51,16 @@ public class KafkaProd {
         log.info("Начало отправки информации в кафку: key = " + key + "; message = " + kafkaProducerMessage);
 
         kafkaDataProducerConsumer.put(key, kafkaConsumerMessage);
-        Runnable task = () -> {
-            synchronized(kafkaConsumerMessage) {
-                try {
-                    kafkaTemplate.send(topic, key, kafkaProducerMessage);
-                    kafkaConsumerMessage.wait();
-                } catch(InterruptedException e) {
-                    log.error("ERROR" + e.getMessage());
-                } finally {
-                    kafkaDataProducerConsumer.remove(key);
-                }
+        synchronized(kafkaConsumerMessage) {
+            try {
+                kafkaTemplate.send(topic, key, kafkaProducerMessage);
+                kafkaConsumerMessage.wait();
+            } catch(InterruptedException e) {
+                log.error("ERROR" + e.getMessage());
+            } finally {
+                kafkaDataProducerConsumer.remove(key);
             }
-        };
-        Thread taskThread = new Thread(task);
-        taskThread.start();
-        taskThread.join();
+        }
 
         log.info("Конец отправки информации в кафку: key = " + key + "; message = " + kafkaProducerMessage);
         log.info("Возратился ответ от кафки: key = " + key + "; message = " + kafkaConsumerMessage);

@@ -23,7 +23,7 @@ public class KafkaCon {
     public void consume(ConsumerRecord<String, KafkaConsumerMessage> record) {
         log.info("Consumer message: key: " + record.key() + "; message: " + record.value());
 
-
+        log.info("THREAD consume: " + Thread.currentThread().getName());
 
         if (record.key() != null && kafkaDataProducerConsumer.get(record.key()) != null && (record.value() instanceof KafkaConsumerMessage)) {
             KafkaConsumerMessage kafkaConsumerMessage = kafkaDataProducerConsumer.get(record.key());

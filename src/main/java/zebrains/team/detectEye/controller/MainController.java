@@ -47,6 +47,9 @@ public class MainController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile uploadFile) {
+
+        log.info("THREAD uploadFile: " + Thread.currentThread().getName());
+
         log.info("Single file start upload!");
 
         if (uploadFile.isEmpty()) {
@@ -70,7 +73,7 @@ public class MainController {
 
             return initSuccessResponse(kafkaConsumerMessage);
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             log.error("Error!", e);
             return initErrorResponse(e.getMessage());
         }
