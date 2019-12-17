@@ -27,6 +27,7 @@ public class ResponseService {
 
     public ResponseEntity initSuccessResponse(KafkaConsumerMessage data) {
         successResponseObject.setName(data.getName());
+        successResponseObject.setDescription(data.getDescription());
         successResponseObject.setUrl(Paths.get(UPLOAD_FOLDER, data.getUuid() + IMAGE_FORMAT).toString());
         log.info("Success: \ndata rom kafka:\n" + data + "\nResponse:\n" + successResponseObject);
         return ResponseEntity.ok(successResponseObject);

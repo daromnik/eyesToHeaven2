@@ -9,4 +9,5 @@ public class BaseResponseObject {
     public static final String STATUS_SUCCESS = "success";
 
     private String status;
+    private String description;
 }

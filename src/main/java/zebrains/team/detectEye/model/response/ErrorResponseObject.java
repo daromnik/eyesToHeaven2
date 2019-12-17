@@ -15,7 +15,6 @@ public class ErrorResponseObject extends BaseResponseObject {
     public static final String TYPE_INCORRECT_FILE = "incorrect_file";
     public static final String TYPE_SERVER_ERROR = "server_error";
 
-    private String description;
     private String type;
 
     public ErrorResponseObject() {
