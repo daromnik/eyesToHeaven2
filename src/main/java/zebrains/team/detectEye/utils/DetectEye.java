@@ -31,7 +31,6 @@ public class DetectEye {
     private String imageFormat;
     private String imageName;
     private ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-    //private final String CLASSIFIER_PATH = "haarcascades/haarcascade_eye.xml";
     private final String CLASSIFIER_PATH = "haarcascades/haarcascade_eye_tree_eyeglasses.xml";
 
     @Value("${spring.application.eyeFolder}")

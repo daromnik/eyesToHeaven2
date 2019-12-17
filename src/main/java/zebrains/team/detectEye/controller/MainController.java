@@ -1,18 +1,18 @@
 package zebrains.team.detectEye.controller;
 
 import lombok.extern.log4j.Log4j;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
-import zebrains.team.detectEye.model.ResponseObject;
+import zebrains.team.detectEye.model.response.ErrorResponseObject;
+import zebrains.team.detectEye.model.response.ResponseService;
 import zebrains.team.detectEye.producer.KafkaProd;
 import zebrains.team.detectEye.utils.DetectEye;
 import zebrains.team.detectEye.utils.SaveFile;
@@ -25,74 +25,57 @@ import java.net.URISyntaxException;
 @Log4j
 public class MainController {
 
+    @Autowired
     private SaveFile saveFileModel;
+    @Autowired
     private DetectEye detectEyeModel;
-    private ResponseObject responseObject;
+    @Autowired
     private KafkaProd kafkaProd;
-
     @Autowired
     private ApplicationContext context;
+    @Autowired
+    private ResponseService responseService;
 
-    public MainController(
-            SaveFile saveFileModel,
-            DetectEye detectEyeModel,
-            ResponseObject responseObject
-            //KafkaProd kafkaProd
-    ) {
-        this.saveFileModel = saveFileModel;
-        this.detectEyeModel = detectEyeModel;
-        this.responseObject = responseObject;
-        //this.kafkaProd = kafkaProd;
-    }
+    private final String IMAGE_FORMAT = "jpeg";
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile uploadFile) {
 
-        log.info("THREAD uploadFile: " + Thread.currentThread().getName());
-
         log.info("Single file start upload!");
 
         if (uploadFile.isEmpty()) {
-            return initErrorResponse("please select a file!");
+            return responseService.initErrorResponse("please select a file!",
+                    ErrorResponseObject.TYPE_INCORRECT_FILE, HttpStatus.FORBIDDEN);
         }
 
-        if (!uploadFile.getContentType().contains("jpeg")) {
-            return initErrorResponse("please select an image file (jpeg, jpg)!");
+        if (!uploadFile.getContentType().contains(IMAGE_FORMAT)) {
+            return responseService.initErrorResponse("please select an image file (jpeg, jpg)!",
+                    ErrorResponseObject.TYPE_INCORRECT_FILE, HttpStatus.FORBIDDEN);
         }
 
         try {
             String pathImage = saveFileModel.saveUploadedFiles(uploadFile);
+            if (pathImage.isEmpty()) {
+                return responseService.initErrorResponse("Image was not saved!",
+                        ErrorResponseObject.TYPE_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
             String eyeImage = detectEyeModel.detectEye(pathImage);
             if (eyeImage.isEmpty()) {
-                return initErrorResponse("No eyes found in the picture");
+                return responseService.initErrorResponse("No eyes found in the picture!",
+                        ErrorResponseObject.TYPE_WITHOUT_EYE, HttpStatus.FORBIDDEN);
             }
 
             kafkaProd = context.getBean(KafkaProd.class);
             kafkaProd.setImageEyePath(eyeImage);
             KafkaConsumerMessage kafkaConsumerMessage = kafkaProd.send();
 
-            return initSuccessResponse(kafkaConsumerMessage);
+            return responseService.initSuccessResponse(kafkaConsumerMessage);
 
         } catch (IOException e) {
             log.error("Error!", e);
-            return initErrorResponse(e.getMessage());
+            return responseService.initErrorResponse(e.getMessage(),
+                    ErrorResponseObject.TYPE_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private ResponseEntity initSuccessResponse(KafkaConsumerMessage data) {
-        responseObject.setStatus(ResponseObject.STATUS_SUCCESS);
-        responseObject.setData(data);
-        responseObject.setDescription("");
-        log.info("Success: " + data);
-        return ResponseEntity.ok(responseObject);
-    }
-
-    private ResponseEntity initErrorResponse(String error) {
-        responseObject.setDescription(error);
-        responseObject.setStatus(ResponseObject.STATUS_ERROR);
-        responseObject.setData(null);
-        log.error("Error: " + error);
-        return ResponseEntity.badRequest().body(responseObject);
     }
 
     @PostMapping("/test")
