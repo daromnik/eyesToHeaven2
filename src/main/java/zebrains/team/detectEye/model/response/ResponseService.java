@@ -2,6 +2,7 @@ package zebrains.team.detectEye.model.response;
 
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,8 @@ import java.nio.file.Paths;
 @Log4j
 public class ResponseService {
 
-    @Value("${spring.application.eyeFolder}")
-    private String UPLOAD_FOLDER;
+    @Value("${spring.application.spaceFolder}")
+    private String SPACE_FOLDER;
     private final String IMAGE_FORMAT = ".jpg";
 
     private final SuccessResponseObject successResponseObject;
@@ -28,7 +29,8 @@ public class ResponseService {
     public ResponseEntity initSuccessResponse(KafkaConsumerMessage data) {
         successResponseObject.setName(data.getName());
         successResponseObject.setDescription(data.getDescription());
-        successResponseObject.setUrl(Paths.get(UPLOAD_FOLDER, data.getUuid() + IMAGE_FORMAT).toString());
+        successResponseObject.setUrl(Paths.get(SPACE_FOLDER, data.getUuid() + IMAGE_FORMAT).toString());
+        //successResponseObject.setUrl(data.getUuid() + IMAGE_FORMAT);
         log.info("Success: \ndata rom kafka:\n" + data + "\nResponse:\n" + successResponseObject);
         return ResponseEntity.ok(successResponseObject);
     }

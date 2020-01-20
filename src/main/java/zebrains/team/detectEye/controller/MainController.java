@@ -3,12 +3,10 @@ package zebrains.team.detectEye.controller;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.response.ErrorResponseObject;
@@ -38,6 +36,7 @@ public class MainController {
 
     private final String IMAGE_FORMAT = "jpeg";
 
+    @CrossOrigin
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile uploadFile) {
 

@@ -7,7 +7,9 @@ import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -19,8 +21,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.opencv.imgproc.Imgproc.circle;
-
 @Service
 @Log4j
 public class DetectEye {
@@ -31,14 +31,14 @@ public class DetectEye {
     private String imageFormat;
     private String imageName;
     private ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-    private final String CLASSIFIER_PATH = "haarcascades/haarcascade_eye_tree_eyeglasses.xml";
 
     @Value("${spring.application.eyeFolder}")
     private String UPLOAD_FOLDER;
 
-    public DetectEye() {
+    @Autowired
+    public DetectEye(@Value("${opencv.classifier.path}") String classifierPath) {
         OpenCV.loadLocally();
-        faceCascade = new CascadeClassifier(classloader.getResource(CLASSIFIER_PATH).getPath());
+        faceCascade = new CascadeClassifier(classifierPath);
     }
 
     /**
@@ -104,41 +104,20 @@ public class DetectEye {
                 byte[] eyePixels = ((DataBufferByte) dest.getRaster().getDataBuffer()).getData();
                 Mat eyeMat = new Mat(dest.getHeight(), dest.getWidth(), CvType.CV_8UC3);
                 eyeMat.put(0, 0, eyePixels);
+                String eyeImageName = imageName + "_eye." + imageFormat;
+                String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
+                File fileForEye = new File(eyeImage);
+                ImageIO.write(dest, imageFormat, fileForEye);
 
-                //if (isEye(eyeMat)) {
-                    String eyeImageName = imageName + "_eye." + imageFormat;
-                    String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
-                    File fileForEye = new File(eyeImage);
-                    ImageIO.write(dest, imageFormat, fileForEye);
-                    return eyeImageName;
-//                }
-//                else {
-//                    String eyeImageName = imageName + "_eye_error_x." + item.x + "_" + imageFormat;
-//                    String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
-//                    File fileForEye = new File(eyeImage);
-//                    ImageIO.write(dest, imageFormat, fileForEye);
-//                }
+//                BufferedImage destImage = dest.getSubimage(item.width/3, item.height/3, item.width/3, item.height/3);
+//                String eyeImageDestName = imageName + "_dest." + imageFormat;
+//                String eyeDestImage = Paths.get(UPLOAD_FOLDER, eyeImageDestName).toString();
+//                File fileForEyeDest = new File(eyeDestImage);
+//                ImageIO.write(destImage, imageFormat, fileForEyeDest);
+
+                return eyeImageName;
             }
         }
         return "";
     }
-
-    public boolean isEye(Mat img) {
-        OpenCV.loadLocally();
-
-        Mat gray = new Mat();
-        Imgproc.cvtColor(img, gray, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.blur(gray, gray, new Size(3, 3));
-
-        Mat edges = new Mat();
-        int lowThreshold = 40;
-        int ratio = 3;
-        Imgproc.Canny(gray, edges, lowThreshold, lowThreshold * ratio);
-
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(edges, circles, Imgproc.CV_HOUGH_GRADIENT, 1, 6, 100, 10, 3, 0 );
-
-        return !circles.empty();
-    }
-
 }
