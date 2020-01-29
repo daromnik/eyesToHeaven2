@@ -3,6 +3,7 @@ package zebrains.team.detectEye.utils;
 import com.google.common.io.Files;
 import lombok.extern.log4j.Log4j;
 import nu.pattern.OpenCV;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -17,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
@@ -26,6 +28,7 @@ import java.util.*;
 public class DetectEye {
 
     private BufferedImage originImage;
+    private CascadeClassifier eyeCascade;
     private CascadeClassifier faceCascade;
     private Mat originMat;
     private String imageFormat;
@@ -36,9 +39,13 @@ public class DetectEye {
     private String UPLOAD_FOLDER;
 
     @Autowired
-    public DetectEye(@Value("${opencv.classifier.path}") String classifierPath) {
+    public DetectEye(
+            @Value("${opencv.classifier.path}") String classifierEyePath,
+            @Value("${opencv.classifier.face.path}") String classifierFacePath
+    ) {
         OpenCV.loadLocally();
-        faceCascade = new CascadeClassifier(classifierPath);
+        eyeCascade = new CascadeClassifier(classifierEyePath);
+        faceCascade = new CascadeClassifier(classifierFacePath);
     }
 
     /**
@@ -69,55 +76,49 @@ public class DetectEye {
     }
 
     /**
-     * Возвращает оригинальную картинку в виде массива байтов
-     * @return ByteArrayInputStream
-     */
-    public ByteArrayInputStream getOriginImageStream() {
-        MatOfByte buffer = new MatOfByte();
-        Imgcodecs.imencode(imageFormat, originMat , buffer);
-        return new ByteArrayInputStream(buffer.toArray());
-    }
-
-    /**
-     * Определение на картинке глаз,
-     * выделение их в зеленые прямоугольники,
-     * сохранение этих областей в файлы.
+     * Определение на картинке лица, а на нем глаз,
+     * вырезание этих обблайстей и сохранение в файлы.
+     * Возвращает путь у файлу или же пустую строку, если глаз не найдено.
      *
      * @param originMat Mat
-     * @throws IOException
-     * @return boolean
+     * @return String
      */
-    private String detectAndSave(Mat originMat) throws IOException {
+    private String detectAndSave(Mat originMat) {
         MatOfRect eyes = new MatOfRect();
+        MatOfRect faces = new MatOfRect();
         Mat grayFrame = new Mat();
 
         Imgproc.cvtColor(originMat, grayFrame, Imgproc.COLOR_BGR2GRAY);
         Imgproc.equalizeHist(grayFrame, grayFrame);
 
-        this.faceCascade.detectMultiScale(grayFrame, eyes);
+        //this.faceCascade.detectMultiScale(grayFrame, faces);
+        this.faceCascade.detectMultiScale(grayFrame, faces, 1.04, 2, 0, new Size(300, 300), new Size(0, 0) );
 
-        Rect[] eyesArray = eyes.toArray();
-        Arrays.sort(eyesArray, (r1, r2) -> (int)(r1.area() - r2.area()));
-        if (eyesArray.length > 0) {
-            for (Rect item : eyesArray) {
-                BufferedImage dest = originImage.getSubimage(item.x, item.y, item.width, item.height);
-                byte[] eyePixels = ((DataBufferByte) dest.getRaster().getDataBuffer()).getData();
-                Mat eyeMat = new Mat(dest.getHeight(), dest.getWidth(), CvType.CV_8UC3);
-                eyeMat.put(0, 0, eyePixels);
-                String eyeImageName = imageName + "_eye." + imageFormat;
-                String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
-                File fileForEye = new File(eyeImage);
-                ImageIO.write(dest, imageFormat, fileForEye);
+        Rect[] facesArray = faces.toArray();
+        Arrays.sort(facesArray, (r1, r2) -> (int)(r2.area() - r1.area()));
+        if (facesArray.length > 0) {
+            for (Rect item : facesArray) {
 
-//                BufferedImage destImage = dest.getSubimage(item.width/3, item.height/3, item.width/3, item.height/3);
-//                String eyeImageDestName = imageName + "_dest." + imageFormat;
-//                String eyeDestImage = Paths.get(UPLOAD_FOLDER, eyeImageDestName).toString();
-//                File fileForEyeDest = new File(eyeDestImage);
-//                ImageIO.write(destImage, imageFormat, fileForEyeDest);
+                Mat faceMat = originMat.submat(item.y, item.y + item.height, item.x, item.x + item.width);
+                Mat grayFaceFrame = new Mat();
+                Imgproc.cvtColor(faceMat, grayFaceFrame, Imgproc.COLOR_BGR2GRAY);
+                Imgproc.equalizeHist(grayFaceFrame, grayFaceFrame);
 
-                return eyeImageName;
+                this.eyeCascade.detectMultiScale(grayFaceFrame, eyes, 1.04, 2, 0, new Size(30, 30), new Size(0, 0) );
+                Rect[] eyesArray = eyes.toArray();
+                Arrays.sort(eyesArray, (r1, r2) -> (int)(r2.area() - r1.area()));
+                if (eyesArray.length > 0) {
+                    for (Rect eye : eyesArray) {
+                        Mat eyeMat = faceMat.submat(eye.y, eye.y + eye.height, eye.x, eye.x + eye.width);
+                        String eyeImageName = imageName + "_eye." + imageFormat;
+                        String eyeImage = Paths.get(UPLOAD_FOLDER, eyeImageName).toString();
+                        Imgcodecs.imwrite(eyeImage, eyeMat);
+                        return eyeImageName;
+                    }
+                }
             }
         }
+
         return "";
     }
 }
