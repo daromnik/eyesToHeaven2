@@ -3,7 +3,6 @@ package zebrains.team.detectEye.controller;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.response.ErrorResponseObject;
 import zebrains.team.detectEye.model.response.ResponseService;
-import zebrains.team.detectEye.producer.KafkaProd;
+import zebrains.team.detectEye.kafka.producer.KafkaProd;
 import zebrains.team.detectEye.utils.DetectEye;
 import zebrains.team.detectEye.utils.SaveFile;
 
@@ -68,7 +67,14 @@ public class MainController {
             kafkaProd.setImageEyePath(eyeImage);
             KafkaConsumerMessage kafkaConsumerMessage = kafkaProd.send();
 
+            if (kafkaConsumerMessage.getId() == null) {
+                return responseService.initErrorResponse("Python return nothing!",
+                        ErrorResponseObject.TYPE_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
             return responseService.initSuccessResponse(kafkaConsumerMessage);
+
+            //return null;
 
         } catch (IOException e) {
             log.error("Error!", e);

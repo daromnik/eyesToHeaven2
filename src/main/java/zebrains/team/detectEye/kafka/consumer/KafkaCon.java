@@ -1,4 +1,4 @@
-package zebrains.team.detectEye.consumer;
+package zebrains.team.detectEye.kafka.consumer;
 
 import lombok.extern.log4j.Log4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

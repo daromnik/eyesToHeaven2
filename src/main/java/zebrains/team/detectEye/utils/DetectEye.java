@@ -3,25 +3,21 @@ package zebrains.team.detectEye.utils;
 import com.google.common.io.Files;
 import lombok.extern.log4j.Log4j;
 import nu.pattern.OpenCV;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.opencv.core.*;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
 
 @Service
 @Log4j
@@ -59,13 +55,9 @@ public class DetectEye {
         if (file.exists()) {
             log.info("Есть картинка " + pathImage);
             try {
-                originImage = ImageIO.read(file);
-
-                byte[] pixels = ((DataBufferByte) originImage.getRaster().getDataBuffer()).getData();
-                originMat = new Mat(originImage.getHeight(), originImage.getWidth(), CvType.CV_8UC3);
-                originMat.put(0, 0, pixels);
+                originMat = Imgcodecs.imread(pathImage);
                 return detectAndSave(originMat);
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 log.error("Error!", e);
                 e.printStackTrace();
             }

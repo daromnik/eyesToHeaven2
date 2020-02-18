@@ -1,17 +1,13 @@
-package zebrains.team.detectEye.error;
+package zebrains.team.detectEye.kafka.error;
 
 import lombok.extern.log4j.Log4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.springframework.kafka.listener.ContainerAwareErrorHandler;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.kafka.support.serializer.DeserializationException;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Log4j
 public class KafkaErrorHandler implements ContainerAwareErrorHandler {

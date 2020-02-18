@@ -18,7 +18,8 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer2;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.ui.Model;
-import zebrains.team.detectEye.error.KafkaErrorHandler;
+//import zebrains.team.detectEye.error.KafkaErrorHandler;
+import zebrains.team.detectEye.kafka.error.KafkaErrorHandler;
 import zebrains.team.detectEye.model.KafkaConsumerMessage;
 import zebrains.team.detectEye.model.KafkaProducerMessage;
 

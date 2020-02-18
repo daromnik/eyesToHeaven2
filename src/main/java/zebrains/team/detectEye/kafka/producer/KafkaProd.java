@@ -1,4 +1,4 @@
-package zebrains.team.detectEye.producer;
+package zebrains.team.detectEye.kafka.producer;
 
 import com.google.common.io.Files;
 import lombok.extern.log4j.Log4j;
